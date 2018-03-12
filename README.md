@@ -1,2 +1,2 @@
 # Bachelor
-Komm
+Kommunikasjon mellom bil og Pitstop
