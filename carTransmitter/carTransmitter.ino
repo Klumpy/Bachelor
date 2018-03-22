@@ -52,19 +52,42 @@ void setup() {
 
 void loop() {
   
-  char loraBuf[93];
+  char loraBuf[103];
   char canBuf[8];
-  uint8_t canId[2];
+  unsigned int canId;
 
   uint8_t add;
   uint8_t chk;
-  uint8_t len = sizeof(loraBuf);
+  uint8_t loraLen = sizeof(loraBuf);
+  uint8_t canLen = 0;
 
-  lora.send(loraBuf, len);      // send a message to establish connection
+  //lora.send(loraBuf, loraLen);      // send a message to establish connection
 
-  lora.waitPacketSent();
+  //lora.waitPacketSent();
 
+  loraBuf[0] = add;
+  loraBuf[1] = chk;
+  loraBuf[2] = loraLen;
   
+  for(int i = 3; i < loraLen - 10; i + 10)
+  {
+    if(CAN_MSGAVAIL == CAN.checkReceive())
+    {
+      CAN.readMsgBuf(&canLen, canBuf);
+
+      canId = CAN.getCanId();
+
+      loraBuf[i] = canId & 0xff;            // Print canId to loraBuf
+      loraBuf[i + 1] = canId >> 8;
+        
+      for(int j = 2; j < canLen + 2; j++)   // Print canBuf to loraBuf
+      {
+        loraBuf[i + j] = canBuf[j - 2];
+      }
+    }    
+  }
+
+  lora.send(loraBuf, loraLen);  
 
 }
 
