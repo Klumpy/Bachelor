@@ -12,30 +12,34 @@ const int SPI_CS_PIN = 9;
 // Set CS pin. This is for CAN-BUS shield to communicate with Arduino
 MCP_CAN CAN(SPI_CS_PIN);    
 
-// Singleton instance of the radio driver
-SoftwareSerial ss(5, 6);
-RH_RF95 lora(ss);
+// Singleton instance of the radio drive
+const byte rxPin = 5;
+const byte txPin = 6;
+SoftwareSerial uart(rxPin, txPin);
+RH_RF95 lora(uart);
 
 void setup() {
 
   Serial.begin(115200);
 
+  Serial.println("CAN BUS Shield init:");
   while (CAN_OK != CAN.begin(CAN_500KBPS))              // init can bus : baudrate = 500k
   {
-    Serial.println("CAN BUS Shield init fail");
+    Serial.println(" CAN BUS Shield init fail");
     Serial.println(" Init CAN BUS Shield again");
     delay(100);
   }
-  Serial.println("CAN BUS Shield init ok!");
+  Serial.println(" CAN BUS Shield init ok!");
 
   // LoRa init
-  Serial.println("LoRa transmitter init");
-  if (!lora.init())
+  Serial.println("LoRa transmitter init:");
+  while (!lora.init())
   {
-    Serial.println("init failed");
-    while(1);
+    Serial.println(" LoRa init failed");
+    Serial.println(" Init LoRa again");
+    delay(100);
   }
-
+  Serial.println(" LoRa init ok!");
   // Defaults after init are 434.0MHz, 13dBm, Bw = 125 kHz, Cr = 4/5, Sf = 128chips/symbol, CRC on
 
   // The default transmitter power is 13dBm, using PA_BOOST.
@@ -47,6 +51,20 @@ void setup() {
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
+  
+  char loraBuf[93];
+  char canBuf[8];
+  uint8_t canId[2];
+
+  uint8_t add;
+  uint8_t chk;
+  uint8_t len = sizeof(loraBuf);
+
+  lora.send(loraBuf, len);      // send a message to establish connection
+
+  lora.waitPacketSent();
+
+  
 
 }
+
