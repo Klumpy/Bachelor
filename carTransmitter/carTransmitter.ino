@@ -12,17 +12,21 @@ const int SPI_CS_PIN = 9;
 // Set CS pin. This is for CAN-BUS shield to communicate with Arduino
 MCP_CAN CAN(SPI_CS_PIN);    
 
-// Singleton instance of the radio drive
+// instance of the radio drive
 const byte rxPin = 5;
 const byte txPin = 6;
 SoftwareSerial uart(rxPin, txPin);
 RH_RF95 lora(uart);
 
+char loraBuf[103];
+uint8_t add;
+uint8_t chk;
+uint8_t loraLen = sizeof(loraBuf);
+  
 void setup() {
 
   Serial.begin(115200);
 
-  Serial.println("CAN BUS Shield init:");
   while (CAN_OK != CAN.begin(CAN_500KBPS))              // init can bus : baudrate = 500k
   {
     Serial.println(" CAN BUS Shield init fail");
@@ -48,27 +52,24 @@ void setup() {
   //lora.setTxPower(13, false);
     
   lora.setFrequency(868.0);
-}
-
-void loop() {
-  
-  char loraBuf[103];
-  char canBuf[8];
-  unsigned int canId;
-
-  uint8_t add;
-  uint8_t chk;
-  uint8_t loraLen = sizeof(loraBuf);
-  uint8_t canLen = 0;
-
-  //lora.send(loraBuf, loraLen);      // send a message to establish connection
-
-  //lora.waitPacketSent();
 
   loraBuf[0] = add;
   loraBuf[1] = chk;
   loraBuf[2] = loraLen;
+
+  //lora.send(loraBuf, loraLen);      // send a message to establish connection
+
+  //lora.waitPacketSent();            
   
+  // wait for konfig
+}
+
+void loop() {
+  
+  char canBuf[8];
+  unsigned int canId;
+  uint8_t canLen = 0;
+ 
   for(int i = 3; i < loraLen - 10; i + 10)
   {
     if(CAN_MSGAVAIL == CAN.checkReceive())
@@ -88,6 +89,8 @@ void loop() {
   }
 
   lora.send(loraBuf, loraLen);  
+  
+  lora.waitPacketSent();
 
 }
 
