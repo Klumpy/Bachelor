@@ -21,10 +21,15 @@ RH_RF95 lora(uart);
 char loraBuf[103];
 uint8_t add;
 uint8_t chk;
-uint8_t loraLen = sizeof(loraBuf);
+uint8_t loraLen;
+
+//recieveBufferConfig...
   
 void setup() {
 
+  char loraBufStd[5];
+  loraLen = sizeof(loraBufStd);
+  
   Serial.begin(115200);
 
   while (CAN_OK != CAN.begin(CAN_500KBPS))              // init can bus : baudrate = 500k
@@ -53,15 +58,16 @@ void setup() {
     
   lora.setFrequency(868.0);
 
-  loraBuf[0] = add;
-  loraBuf[1] = chk;
-  loraBuf[2] = loraLen;
+  loraBufStd[0] = add;
+  loraBufStd[1] = chk;
+  loraBufStd[2] = loraLen;
 
-  //lora.send(loraBuf, loraLen);      // send a message to establish connection
+  //lora.send(loraBufStd, loraLen);      // send a message to establish connection
 
   //lora.waitPacketSent();            
   
   // wait for konfig
+  // set loraLen = ..fra config
 }
 
 void loop() {
@@ -70,7 +76,7 @@ void loop() {
   unsigned int canId;
   uint8_t canLen = 0;
  
-  for(int i = 3; i < loraLen - 10; i + 10)
+  for(int i = 3; i < loraLen - 10; i + 10)  // change 10's to config number
   {
     if(CAN_MSGAVAIL == CAN.checkReceive())
     {
@@ -78,7 +84,7 @@ void loop() {
 
       canId = CAN.getCanId();
 
-      loraBuf[i] = canId & 0xff;            // Print canId to loraBuf
+      loraBuf[i] = canId & 0xff;            // Print canId to loraBuf   ... NB! remember to test this!
       loraBuf[i + 1] = canId >> 8;
         
       for(int j = 2; j < canLen + 2; j++)   // Print canBuf to loraBuf
