@@ -84,8 +84,8 @@ void loop() {
 
       canId = CAN.getCanId();
 
-      loraBuf[i] = canId & 0xff;            // Print canId to loraBuf   ... NB! remember to test this!
-      loraBuf[i + 1] = canId >> 8;
+      loraBuf[i] = canId >> 8;              // Print canId to loraBuf
+      loraBuf[i + 1] = canId & 0xff;            
         
       for(int j = 2; j < canLen + 2; j++)   // Print canBuf to loraBuf
       {
