@@ -18,12 +18,13 @@ const byte txPin = 6;
 SoftwareSerial uart(rxPin, txPin);
 RH_RF95 lora(uart);
 
-char loraBuf[103];
 uint8_t add;
 uint8_t chk;
 uint8_t loraLen;
 
-//recieveBufferConfig...
+uint8_t recieveBuf[4];
+uint8_t recieveConf;
+
   
 void setup() {
 
@@ -49,10 +50,8 @@ void setup() {
     delay(100);
   }
   Serial.println(" LoRa init ok!");
+  
   // Defaults after init are 434.0MHz, 13dBm, Bw = 125 kHz, Cr = 4/5, Sf = 128chips/symbol, CRC on
-
-  // The default transmitter power is 13dBm, using PA_BOOST.
-  // If you are using RFM95/96/97/98 modules which uses the PA_BOOST transmitter pin, then 
   // you can set transmitter powers from 5 to 23 dBm:
   //lora.setTxPower(13, false);
     
@@ -62,21 +61,46 @@ void setup() {
   loraBufStd[1] = chk;
   loraBufStd[2] = loraLen;
 
-  //lora.send(loraBufStd, loraLen);      // send a message to establish connection
+  lora.send(loraBufStd, loraLen);      // send a message to establish connection
 
-  //lora.waitPacketSent();            
+  lora.waitPacketSent();            
   
   // wait for konfig
-  // set loraLen = ..fra config
+  if(lora.waitAvailableTimeout(4000)) //should be a message ready after 4 sek
+  {
+    if(lora.recv(recieveBuf, sizeof(recieveBuf)))
+    {
+      if(recieveBuf[0] == add)
+      {
+        Serial.println("Connection OK!");
+        recieveConf = recieveBuf[3];
+      }
+      else
+      {
+        Serial.println("Wrong address!");
+      }
+    }
+    else
+    {
+      Serial.println("failed to recieve.");
+    }
+  }
+  else
+  {
+    Serial.println("No connection!");
+  }
 }
 
 void loop() {
+  
+  char loraBuf[3 + 10*recieveConf];       // set loraBuf to match size of the recieved config
+  loraLen = sizeof(loraBuf);
   
   char canBuf[8];
   unsigned int canId;
   uint8_t canLen = 0;
  
-  for(int i = 3; i < loraLen - 10; i + 10)  // change 10's to config number
+  for(int i = 3; i < loraLen - recieveConf; i + recieveConf)  // recieveConf for set number of can messages in lora transmit 
   {
     if(CAN_MSGAVAIL == CAN.checkReceive())
     {
@@ -87,9 +111,9 @@ void loop() {
       loraBuf[i] = canId >> 8;              // Print canId to loraBuf
       loraBuf[i + 1] = canId & 0xff;            
         
-      for(int j = 2; j < canLen + 2; j++)   // Print canBuf to loraBuf
+      for(int j = 0; j < canLen; j++)   // Print canBuf to loraBuf
       {
-        loraBuf[i + j] = canBuf[j - 2];
+        loraBuf[i + j + 2] = canBuf[j]; // +2 bacause first two spots reserved for canId
       }
     }    
   }
