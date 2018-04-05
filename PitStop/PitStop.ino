@@ -8,13 +8,13 @@
 
 const byte rxPin = 5;
 const byte txPin = 6;
-const int chipSelect = 4;   //Setting Chipselect to pin 4, this is for the SD-card
-String CANstring = "";      //A string for assembling the data we are logging
-char LoraSendBuff[4];       //Buffer we are sending to CarTransmitter
-uint8_t add = 0x1A;         //The address in the buffer 00011010
-uint8_t chk = 2;            //The checksum of the buffer
-uint8_t loraLen = 4;        //The length of the buffer
-uint8_t CANconfig = 10;     //The config that decides how many CAN messages we want
+const int chipSelect = 4;          // Setting Chipselect to pin 4, this is for the SD-card
+//String CANstring = "";            // A string for assembling the data we are logging
+char configBuf[4];                // Buffer we are sending to CarTransmitter
+const uint8_t add = 0x1A;         // The address in the buffer 00011010
+const uint8_t chk = 2;            // The checksum of the buffer
+uint8_t loraLen = 4;              // The length of the buffer
+const uint8_t CANconfig = 10;     // The config that decides how many CAN messages we want
   
 
 
@@ -23,21 +23,21 @@ RH_RF95 lora(uart);
 
 void setup() {
 
-  configBuff[0] = add;
-  configBuff[1] = chk;
-  configBuff[2] = loraLen;
-  configBuff[3] = CANconfig;
+  configBuf[0] = add;
+  configBuf[1] = chk;
+  configBuf[2] = loraLen;
+  configBuf[3] = CANconfig;
   
   Serial.begin(115200);
 
-  //SD-card init
+  // SD-card init
   while (!Serial) 
   {
-    ; // wait for serial port to connect. Needed for native USB port only
+    ; // Wait for serial port to connect. Needed for native USB port only
   }
   Serial.println("Initializing SD card");
     
-  // see if the card is present and can be initialized:
+  // See if the card is present and can be initialized:
   if (!SD.begin(chipSelect)) 
   {
     Serial.println("Card failed, or not present");
@@ -47,7 +47,7 @@ void setup() {
   Serial.println("-----------------");
   delay (100);
   
-  //LoRa init
+  // LoRa init
   Serial.println("LoRa reciever init ok!");
   while (!lora.init())
   {
@@ -57,54 +57,59 @@ void setup() {
   }
   Serial.println("LoRa init ok!");
   Serial.println("-----------------");
-  lora.setFrequency(868.0);
+  lora.setFrequency(868.0);                      // Setting the frequency to 868 MHz
 
-//wait for Setupmessage from CarTransmitter
-  Serial.println("Waiting for Setupmessage from CarTransmitter"); 
+
+  Serial.println("Waiting for Setupmessage from CarTransmitter"); // wait for Setupmessage from CarTransmitter
   while(!lora.available())
   {
     Serial.println("Message not available");
     Serial.println("Trying again");
-    delay(300);
+    delay(500);
   }  
    uint8_t loraBufStp[RH_RF95_MAX_MESSAGE_LEN];
    uint8_t recvLen = sizeof(loraBufStp);
-   if(lora.recv(loraBufStp, &recvLen))
+
+
+   
+   if(lora.recv(loraBufStp, &recvLen))       
     {
-      Serial.println("-----------------"); 
-      Serial.println("Got request: ");
-      Serial.println(loraBufStp[0],HEX);
-      Serial.println(loraBufStp[1]); 
-      Serial.println(loraBufStp[2]); 
-      Serial.println(loraBufStp[3]); 
-      Serial.println("-----------------"); 
-     
-      //Sender svar til CarTransmitter med config
-      lora.send(configBuff, loraLen);
-      lora.waitPacketSent();
-      Serial.println("Sent a reply");
-    }
+         if(loraBufStp[0] != add)                        // Checking if the address recieved is the same as address sent 
+            {
+              Serial.println("Got the wrong address");
+              Serial.println("Trying again");
+            } 
+            else
+            {
+              Serial.println("-----------------"); 
+              Serial.println("Got message: ");
+              for(int i = 0; i < recvLen; i++)        // for loop that is printing the buffer we got
+              {
+                Serial.print("Position ");
+                Serial.print(i);
+                Serial.print(": ");
+                Serial.println(loraBufStp[i]);
+              }
+      
+              lora.send(configBuf, loraLen);       // Sending repl to CarTransmitter with the config
+              lora.waitPacketSent();
+              Serial.println("Sent a reply");
+            }
+     } 
 }
 
 void loop() {
-
-//waiting for message from CarTransmitter
-Serial.print("Waiting for message from CarTransmitter");
-if(lora.available())
-{ 
+/*
+  //waiting for message from CarTransmitter
+  Serial.print("Waiting for message from CarTransmitter");
+  if(lora.available())
+  { 
    uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
    uint8_t recvLen = sizeof(buf);
    lora.recv(buf, &recvLen);
-   
-  if (buf[0] != add)   //Checking if the address recieved is the same as address sent 
-  {
-    SMS.flush();
-    Serial.print("Got the wrong address");
-    Serial.print("Trying again");
-    continue;   
-  }  
+  }
   else 
-  {
+  { */
       //Recieving CAN-packages
       if(lora.available())
       {
@@ -115,13 +120,16 @@ if(lora.available())
             {
               Serial.println("-----------------"); 
               Serial.println("Got request: ");
-              Serial.println(loraBufStp[0],HEX);
-              Serial.println(loraBufStp[1]); 
-              Serial.println(loraBufStp[2]); 
-              Serial.println(loraBufStp[3]); 
-              Serial.println("-----------------");
+              for(int i = 0; i < canConfig; i++)
+                {
+        
+                  Serial.print("Position ");
+                  Serial.print(i);
+                  Serial.print(": ");
+                  Serial.print(loraBufStp[i]);
+                }
             }
           }
         }
-      } 
+      }
    }
