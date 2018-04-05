@@ -18,8 +18,8 @@ const byte txPin = 6;
 SoftwareSerial uart(rxPin, txPin);
 RH_RF95 lora(uart);
 
-uint8_t add;
-uint8_t chk;
+uint8_t add = 0x1a;
+uint8_t chk = 2;
 uint8_t loraLen;
 
 uint8_t recieveBuf[4];
@@ -28,8 +28,8 @@ uint8_t recieveConf;
   
 void setup() {
 
-  char loraBufStd[5];
-  loraLen = sizeof(loraBufStd);
+  char loraBufStp[4];
+  loraLen = sizeof(loraBufStp);
   
   Serial.begin(115200);
 
@@ -57,18 +57,19 @@ void setup() {
     
   lora.setFrequency(868.0);
 
-  loraBufStd[0] = add;
-  loraBufStd[1] = chk;
-  loraBufStd[2] = loraLen;
+  loraBufStp[0] = add;
+  loraBufStp[1] = chk;
+  loraBufStp[2] = loraLen;
+  loraBufStp[3] = 7;
 
-  lora.send(loraBufStd, loraLen);      // send a message to establish connection
+  lora.send(loraBufStp, loraLen);      // send a message to establish connection
 
   lora.waitPacketSent();            
   
   // wait for konfig
   if(lora.waitAvailableTimeout(4000)) //should be a message ready after 4 sek
   {
-    if(lora.recv(recieveBuf, sizeof(recieveBuf)))
+    if(lora.recv(recieveBuf, &loraLen))     
     {
       if(recieveBuf[0] == add)
       {
@@ -89,10 +90,20 @@ void setup() {
   {
     Serial.println("No connection!");
   }
+
+  for(int i = 0; i < loraLen; i++)
+  {
+    Serial.print("Value of recieve buffer pos ");
+    Serial.print(i);
+    Serial.print(": ");
+    Serial.print(recieveBuf[i]);
+    Serial.print(", Hex: ");
+    Serial.println(recieveBuf[i], HEX);
+  }
 }
 
 void loop() {
-  
+/* for testing  
   char loraBuf[3 + 10*recieveConf];       // set loraBuf to match size of the recieved config
   loraLen = sizeof(loraBuf);
   
@@ -121,6 +132,6 @@ void loop() {
   lora.send(loraBuf, loraLen);  
   
   lora.waitPacketSent();
-
+*/
 }
 
