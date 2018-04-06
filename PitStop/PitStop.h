@@ -2,7 +2,7 @@
 #define PITSTOP_H
 
   // make a string for assembling the data to log:
-  String dataString = "";
+  String CANdata = "";
 
 
 #endif // PITSTOP_H
