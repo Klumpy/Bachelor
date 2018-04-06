@@ -62,35 +62,37 @@ void setup() {
   loraBufStp[2] = loraLen;
   loraBufStp[3] = 7;
 
-  lora.send(loraBufStp, loraLen);      // send a message to establish connection
-
-  lora.waitPacketSent();            
-  
-  // wait for konfig
-  if(lora.waitAvailableTimeout(4000)) //should be a message ready after 4 sek
+  while(recieveBuf[0] != add)
   {
-    if(lora.recv(recieveBuf, &loraLen))     
+    lora.send(loraBufStp, loraLen);      // send a message to establish connection
+
+    lora.waitPacketSent();            
+  
+    // wait for konfig
+    if(lora.waitAvailableTimeout(5000)) // should be a message ready after 5 sek
     {
-      if(recieveBuf[0] == add)
+      if(lora.recv(recieveBuf, &loraLen))     
       {
-        Serial.println("Connection OK!");
-        recieveConf = recieveBuf[3];
+        if(recieveBuf[0] == add)
+        {
+          Serial.println("Connection OK!");
+          recieveConf = recieveBuf[3];
+        }
+        else
+        {
+          Serial.println("Wrong address!");
+        }
       }
       else
       {
-        Serial.println("Wrong address!");
+        Serial.println("failed to recieve.");
       }
     }
     else
     {
-      Serial.println("failed to recieve.");
+      Serial.println("No response, retransmitting!");
     }
   }
-  else
-  {
-    Serial.println("No connection!");
-  }
-
   for(int i = 0; i < loraLen; i++)
   {
     Serial.print("Value of recieve buffer pos ");
