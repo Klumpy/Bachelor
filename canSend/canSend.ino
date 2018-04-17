@@ -21,14 +21,16 @@ const unsigned char hallDataB[8] = {0, 0, 0, 0, 0, 0, 1, 0xb};
 const unsigned char hallDataC[8] = {0, 0, 0, 0, 0, 0, 1, 0xc};
 const unsigned char hallDataD[8] = {0, 0, 0, 0, 0, 0, 1, 0xd};
 
-const unsigned char brakeData[8] = {0, 0, 0, 0, 2, 0xa, 0, 0};
+const unsigned char brakeDataA[8] = {0, 0, 0, 0, 2, 0xa, 0, 0};
+const unsigned char brakeDataB[8] = {0, 0, 0, 0, 2, 0xb, 0, 0};
 
 const unsigned char mpuDataA[8] = {0, 0, 3, 0xa, 0, 0, 0, 0};
 const unsigned char mpuDataB[8] = {0, 0, 3, 0xb, 0, 0, 0, 0};
 const unsigned char mpuDataC[8] = {0, 0, 3, 0xc, 0, 0, 0, 0};
 const unsigned char mpuDataD[8] = {0, 0, 3, 0xd, 0, 0, 0, 0};
 
-const unsigned char rotaryData[8] = {4, 0xa, 0, 0, 0, 0, 0, 0};
+const unsigned char rotaryDataA[8] = {4, 0xa, 0, 0, 0, 0, 0, 0};
+const unsigned char rotaryDataB[8] = {4, 0xb, 0, 0, 0, 0, 0, 0};
 
 void setup() {
 
@@ -54,7 +56,9 @@ void loop() {
   delay(100);
   CAN.sendMsgBuf(hallEffect, 0, 8, hallDataD);
   delay(100);
-  CAN.sendMsgBuf(brakePressure, 0, 8, brakeData);
+  CAN.sendMsgBuf(brakePressure, 0, 8, brakeDataA);
+  delay(100);
+  CAN.sendMsgBuf(brakePressure, 0, 8, brakeDataB);
   delay(100);
   CAN.sendMsgBuf(mpu6050, 0, 8, mpuDataA);
   delay(100);
@@ -64,8 +68,10 @@ void loop() {
   delay(100);
   CAN.sendMsgBuf(mpu6050, 0, 8, mpuDataD);
   delay(100);
-  CAN.sendMsgBuf(rotaryEncoder, 0, 8, rotaryData);
-  delay(100);                                        //total send time 1s
+  CAN.sendMsgBuf(rotaryEncoder, 0, 8, rotaryDataA);
+  delay(100);           
+  CAN.sendMsgBuf(rotaryEncoder, 0, 8, rotaryDataB);
+  delay(100);                                       //total send time 1.2s
 
 }
 
