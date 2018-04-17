@@ -62,6 +62,7 @@ void setup() {
   loraBufStp[2] = loraLen;
   loraBufStp[3] = 7;
 
+
   while(recieveBuf[0] != add)
   {
     lora.send(loraBufStp, loraLen);      // send a message to establish connection
@@ -102,24 +103,38 @@ void setup() {
     Serial.print(", Hex: ");
     Serial.println(recieveBuf[i], HEX);
   }
+  
 }
 
 void loop() {
-/* for testing  
+// for testing  
+  //recieveConf = 10;
   char loraBuf[3 + 10*recieveConf];       // set loraBuf to match size of the recieved config
   loraLen = sizeof(loraBuf);
+
+  Serial.print("Length of lora message: ");
+  Serial.println(loraLen);
   
   char canBuf[8];
   unsigned int canId;
   uint8_t canLen = 0;
- 
-  for(int i = 3; i < loraLen - recieveConf; i + recieveConf)  // recieveConf for set number of can messages in lora transmit 
+  
+  loraBuf[0] = add;
+  loraBuf[1] = chk;
+  loraBuf[2] = loraLen;
+  
+  int i = 3;
+  
+  while(i <= loraLen - recieveConf)  // recieveConf for set number of can messages in lora transmit 
   {
     if(CAN_MSGAVAIL == CAN.checkReceive())
     {
       CAN.readMsgBuf(&canLen, canBuf);
-
+        
       canId = CAN.getCanId();
+
+      Serial.print("CAN id: ");
+      Serial.println(canId, HEX);
 
       loraBuf[i] = canId >> 8;              // Print canId to loraBuf
       loraBuf[i + 1] = canId & 0xff;            
@@ -127,13 +142,25 @@ void loop() {
       for(int j = 0; j < canLen; j++)   // Print canBuf to loraBuf
       {
         loraBuf[i + j + 2] = canBuf[j]; // +2 bacause first two spots reserved for canId
+        Serial.print("buff position: ");
+        Serial.print(j + 2);
+        Serial.print(" data: ");
+        Serial.println(loraBuf[i + j + 2], HEX);
       }
-    }    
+      i = i + recieveConf;
+    }   
+    //Serial.print("utenfor if-statement. i = ");
+    //Serial.println(i);
   }
+
 
   lora.send(loraBuf, loraLen);  
   
   lora.waitPacketSent();
-*/
+
+  Serial.println("LoRa message sent!");
+  Serial.println("---------------------------------------");
+  delay(2000);
+
 }
 
