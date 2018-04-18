@@ -8,16 +8,17 @@
 
 const byte rxPin = 5;
 const byte txPin = 6;
-const int chipSelect = 4;          // Setting Chipselect to pin 4, this is for the SD-card
-String CANdata = "";            // A string for assembling the data we are logging
+const int chipSelect = 4;         // Setting Chipselect to pin 4, this is for the SD-card
 char configBuf[4];                // Buffer we are sending to CarTransmitter
 const uint8_t add = 0x1A;         // The address in the buffer 00011010
 const uint8_t chk = 2;            // The checksum of the buffer
 uint8_t loraLen = 4;              // The length of the buffer
 const uint8_t CANconfig = 10;     // The config that decides how many CAN messages we want
-  
+uint8_t recvLen;
+char loraBufStp[4];
+char canDataBuf[3 + 10*CANconfig];
 
-
+File canDataLog;
 SoftwareSerial uart(rxPin, txPin);
 RH_RF95 lora(uart);
 
@@ -41,9 +42,9 @@ void setup() {
   if (!SD.begin(chipSelect)) 
   {
     Serial.println("Card failed, or not present");
-    return;
+    while(1);
   }
-  Serial.println("card initialized");
+  Serial.println("SD-card initialized");
   Serial.println("-----------------");
   delay (100);
   
@@ -51,11 +52,11 @@ void setup() {
   Serial.println("LoRa reciever init ok!");
   while (!lora.init())
   {
-    Serial.println("LoRa init failed");
-    Serial.println("Init LoRa again");
+    Serial.println("LoRa initialized failed");
+    Serial.println("Initializing LoRa again");
     delay(100);
   }
-  Serial.println("LoRa init ok!");
+  Serial.println("LoRa initialized ok!");
   Serial.println("-----------------");
   lora.setFrequency(868.0);                      // Setting the frequency to 868 MHz
 
@@ -65,10 +66,10 @@ void setup() {
   {
     Serial.println("Message not available");
     Serial.println("Trying again");
-    delay(500);
+    delay(1000);
   }   
-  uint8_t loraBufStp[RH_RF95_MAX_MESSAGE_LEN];
-  uint8_t recvLen = sizeof(loraBufStp);
+  //loraBufStp[RH_RF95_MAX_MESSAGE_LEN];
+  recvLen = sizeof(loraBufStp);
  
   if(lora.recv(loraBufStp, &recvLen))       
     {
@@ -81,48 +82,70 @@ void setup() {
             {
               Serial.println("-----------------"); 
               Serial.println("Got message: ");
-              for(int i = 0; i < recvLen; i++)        // for loop that is printing the buffer we got
+              for(int i = 0; i < recvLen; i++)          // for loop that is printing the buffer we got
               {
                 Serial.print("Position ");
                 Serial.print(i);
-                Serial.print(": ");
-                Serial.println(loraBufStp[i]);
+                Serial.print(" of the buffer is: ");
+                Serial.println(loraBufStp[i], HEX);
               }
-      /*
-              lora.send(configBuf, loraLen);       // Sending repl to CarTransmitter with the config
+              lora.send(configBuf, loraLen);           // Sending repl to CarTransmitter with the config
               lora.waitPacketSent();
               Serial.println("Sent a reply");
-            */ }
+             }
      } 
 }
 
 void loop() {
-/*
-  //Recieving CAN-packages
-  if(lora.available())
-  {
-    uint8_t canDataBuf[RH_RF95_MAX_MESSAGE_LEN];
-    uint8_t recvLen = sizeof(canDataBuf);
-    lora.recv(canDataBuf, &recvLen);
-    if(lora.recv(canDataBuf, &recvLen))
-        {
-          Serial.println("-----------------"); 
-          Serial.println("Got CAN messages: ");
-          for(int i = 0; i < canConfig; i++)
-            {
-              Serial.print("Position ");
-              Serial.print(i);
-              Serial.print(": ");
-              Serial.print(canDataBuf[i]);
-            }
 
-            File dataFile = SD.open("CANdatalog.txt", FILE_WRITE);
-            if(CANdatalog.txt)
+//Recieving CAN-packages
+if(lora.available())
+  {
+   // Collecting the recieved data in a buffer and printing it to serial and SD-card
+   canDataLog = SD.open("canDataLog.txt", FILE_WRITE);    // Opens the file
+   recvLen = sizeof(canDataBuf);
+   if(lora.recv(canDataBuf, &recvLen))
+     {
+       Serial.println("-----------------"); 
+       Serial.println("Got CAN messages: ");
+       canDataLog.println("-----------------"); 
+       canDataLog.println("Got CAN messages: ");
+       for(int i = 0; i < recvLen; i++)                    // Printing the buffer to the serial to see what CarTransmitter is sending
+          {
+            Serial.print("Position ");
+            Serial.print(i);
+            Serial.print(" of the buffer is: ");
+            Serial.println(canDataBuf[i], HEX);
+              
+            canDataLog.print("Position ");
+            canDataLog.print(i); 
+            canDataLog.print(" of the buffer is: ");         
+            canDataLog.println(canDataBuf[i], HEX);
+              
+           }
+       Serial.println("-----------------");
+       canDataLog.println("-----------------");           
+      } 
+   canDataLog.close();
+   }
+}     
+         /* if(!canDataLog.available())                                 // Check if the file is available
             {
-              CANdatalog.println(CANdata);
-              dataFile.close();
-              Serial.println(dataString);
+              Serial.println("The File was not available");           // If it is not there we print it to the serial
+            } 
+            else
+            {
+              // Printing the buffer to the textfile
+              for(int i = 0; i < CANconfig; i++)
+              { 
+                canDataLog.print("Position ");
+                canDataLog.print(i); 
+                canDataLog.print(" of the buffer is: ");         
+                canDataLog.println(canDataBuf[i]);                         
+              }
+              canDataLog.close();                                    // Then close the file to avoid memory problems
             }
-        }
-  }*/
-}
+        } */
+     
+     
+
