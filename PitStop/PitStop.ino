@@ -60,8 +60,7 @@ void setup() {
   Serial.println("-----------------");
   lora.setFrequency(868.0);                      // Setting the frequency to 868 MHz
 
-
-  Serial.println("Waiting for Setupmessage from CarTransmitter"); // wait for Setupmessage from CarTransmitter
+  Serial.println("Waiting for Setupmessage"); // wait for Setupmessage from CarTransmitter
   while(!lora.available())
   {
     Serial.println("Message not available");
@@ -92,17 +91,20 @@ void setup() {
               lora.send(configBuf, loraLen);           // Sending repl to CarTransmitter with the config
               lora.waitPacketSent();
               Serial.println("Sent a reply");
-             }
-     } 
+            }
+     }
 }
 
 void loop() {
 
+canDataLog = SD.open("canData.txt", FILE_WRITE);    // Opens the file
 //Recieving CAN-packages
-if(lora.available())
+if(lora.available() && canDataLog)
   {
+    Serial.println("LoRa is available");
+    Serial.println("The file is also available");
+   
    // Collecting the recieved data in a buffer and printing it to serial and SD-card
-   canDataLog = SD.open("canDataLog.txt", FILE_WRITE);    // Opens the file
    recvLen = sizeof(canDataBuf);
    if(lora.recv(canDataBuf, &recvLen))
      {
@@ -128,24 +130,6 @@ if(lora.available())
       } 
    canDataLog.close();
    }
-}     
-         /* if(!canDataLog.available())                                 // Check if the file is available
-            {
-              Serial.println("The File was not available");           // If it is not there we print it to the serial
-            } 
-            else
-            {
-              // Printing the buffer to the textfile
-              for(int i = 0; i < CANconfig; i++)
-              { 
-                canDataLog.print("Position ");
-                canDataLog.print(i); 
-                canDataLog.print(" of the buffer is: ");         
-                canDataLog.println(canDataBuf[i]);                         
-              }
-              canDataLog.close();                                    // Then close the file to avoid memory problems
-            }
-        } */
-     
+} 
      
 
