@@ -49,29 +49,29 @@ void loop() {
 
   //send data
   CAN.sendMsgBuf(hallEffect, 0, 8, hallDataA);
-  delay(100);
+  delay(22);
   CAN.sendMsgBuf(hallEffect, 0, 8, hallDataB);
-  delay(100);                                    
+  delay(22);                                    
   CAN.sendMsgBuf(hallEffect, 0, 8, hallDataC);
-  delay(100);
+  delay(22);
   CAN.sendMsgBuf(hallEffect, 0, 8, hallDataD);
-  delay(100);
+  delay(22);
   CAN.sendMsgBuf(brakePressure, 0, 8, brakeDataA);
-  delay(100);
+  delay(22);
   CAN.sendMsgBuf(brakePressure, 0, 8, brakeDataB);
-  delay(100);
+  delay(22);
   CAN.sendMsgBuf(mpu6050, 0, 8, mpuDataA);
-  delay(100);
+  delay(22);
   CAN.sendMsgBuf(mpu6050, 0, 8, mpuDataB);
-  delay(100);
+  delay(22);
   CAN.sendMsgBuf(mpu6050, 0, 8, mpuDataC);
-  delay(100);
+  delay(22);
   CAN.sendMsgBuf(mpu6050, 0, 8, mpuDataD);
-  delay(100);
+  delay(22);
   CAN.sendMsgBuf(rotaryEncoder, 0, 8, rotaryDataA);
-  delay(100);           
+  delay(22);           
   CAN.sendMsgBuf(rotaryEncoder, 0, 8, rotaryDataB);
-  delay(100);                                       //total send time 1.2s
+  delay(22);                                       //total send time .7s
 
 }
 
