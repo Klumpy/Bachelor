@@ -17,6 +17,8 @@ const uint8_t CANconfig = 10;     // The config that decides how many CAN messag
 uint8_t recvLen;
 char loraBufStp[4];
 char canDataBuf[3 + 10*CANconfig];
+unsigned long time;
+uint8_t counter = 0;
 
 //File canDataLog;
 SoftwareSerial uart(rxPin, txPin);
@@ -31,12 +33,14 @@ void setup() {
   recvLen = sizeof(loraBufStp);
   
   Serial.begin(115200);
-
+  lora.setTxPower(20, false);
+  
   // SD-card init
   while (!Serial) 
         {
           ; // Wait for serial port to connect. Needed for native USB port only
-        }
+        } 
+                  
   Serial.println(F("Initializing SD card"));
     
   // See if the card is present and can be initialized:
@@ -62,14 +66,14 @@ void setup() {
   lora.setFrequency(868.0);                      // Setting the frequency to 868 MHz
 
   Serial.println(F("Waiting for Setupmessage")); // wait for Setupmessage from CarTransmitter
-
+  
   while(loraBufStp[0] != add)
   { 
    if(lora.available())
      {          
        if(lora.recv(loraBufStp, &recvLen))       
          {
-            if(loraBufStp[0] == add)                        // Checking if the address recieved is the same as address sent 
+            if(loraBufStp[0] == add)                        // Checking if the same address 
               {
                 lora.send(configBuf, loraLen);           // Sending reply to CarTransmitter with the config
                 lora.waitPacketSent();
@@ -102,24 +106,38 @@ void setup() {
 void loop() {
 
 File canDataLog = SD.open("canData.txt", FILE_WRITE);           // Opens the canData.txt file
-delay(100);
 
 //Recieving CAN-packages
 if(lora.available() && canDataLog)
   {
      Serial.println(F("LoRa is available"));
-     Serial.println(F("The file is also available"));
      
      // Collecting the recieved data in a buffer and printing it to serial and SD-card
      recvLen = sizeof(canDataBuf);
      if(lora.recv(canDataBuf, &recvLen))                     // Recieving the buffer from CarTransmitter
        {
+         lora.send(canDataBuf, loraLen);                     // Replying to test how fast everything is going
+         lora.waitPacketSent();
+         Serial.println(F("Sent a reply"));
+         
+         counter += 1;
+         time = millis();
+         
+         Serial.print(F("Time: "));
+         Serial.println(time);
+         
          Serial.println(F("-----------------")); 
          Serial.println(F("Got CAN messages: "));
          canDataLog.println("-----------------"); 
          canDataLog.println("Got CAN messages: ");
-         for(byte i = 0; i < recvLen; i++)                    // Printing the buffer to the serial and SD-Card
-            {
+
+         Serial.print(F("Counter: "));
+         Serial.println(counter);
+         Serial.print(F("Check Sum: "));
+         Serial.println(canDataBuf[1], DEC);
+         
+         /*for(byte i = 0; i < recvLen; i++)                    // Printing the buffer to the serial and SD-Card
+            {             
               Serial.print("Position ");
               Serial.print(i);
               Serial.print(" of the buffer is: ");
@@ -129,19 +147,16 @@ if(lora.available() && canDataLog)
               canDataLog.print(i); 
               canDataLog.print(" of the buffer is: ");         
               canDataLog.println(canDataBuf[i], HEX);             
-            }             
+            }   */    
          Serial.println(F("-----------------"));
-         canDataLog.println("-----------------");  
-         delay(100);         
+         canDataLog.println("-----------------");          
        } 
      canDataLog.close();
-     delay(100);
   }
   else
   {
-    Serial.println(F("LoRa was not available"));
+    //Serial.println(F("LoRa was not available"));
     canDataLog.close();
-    delay(100);
   }  
 } 
      
